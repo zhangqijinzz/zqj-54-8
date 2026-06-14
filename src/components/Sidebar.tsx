@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom'
-import { Bomb, Target, BookOpen } from 'lucide-react'
+import { Bomb, Target, BookOpen, Database } from 'lucide-react'
 
 const navItems = [
   { path: '/', label: '拆弹训练场', icon: Bomb },
   { path: '/review', label: '弱点复盘台', icon: Target },
   { path: '/bank', label: '题库弹药库', icon: BookOpen },
+  { path: '/data', label: '数据管理中心', icon: Database },
 ]
 
 export default function Sidebar() {

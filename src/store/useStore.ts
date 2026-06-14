@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { PracticeRecord, WeakPoint, TimeLimit } from '@/data/types'
 import { questions } from '@/data/questions'
+import { exportToJSON, downloadFile, mergeData, ExportData } from '@/lib/dataManager'
 
 interface AppState {
   practiceRecords: PracticeRecord[]
@@ -18,6 +19,13 @@ interface AppState {
     streakDays: number
   }
   getTodayPracticeCount: () => number
+  exportData: () => void
+  importData: (data: ExportData, mode: 'overwrite' | 'merge') => {
+    recordsCount: number
+    weakPointsCount: number
+  }
+  setPracticeRecords: (records: PracticeRecord[]) => void
+  setWeakPoints: (weakPoints: WeakPoint[]) => void
 }
 
 const getToday = () => new Date().toISOString().split('T')[0]
@@ -97,10 +105,9 @@ export const useStore = create<AppState>()(
         })
 
         const uniqueDays = new Set(records.map((r) => r.completedAt.split('T')[0]))
-        const sortedDays = Array.from(uniqueDays).sort().reverse()
         let streakDays = 0
         const today = getToday()
-        let checkDate = new Date(today)
+        const checkDate = new Date(today)
 
         for (let i = 0; i < 365; i++) {
           const dateStr = checkDate.toISOString().split('T')[0]
@@ -123,6 +130,44 @@ export const useStore = create<AppState>()(
         const today = getToday()
         return state.practiceRecords.filter((r) => r.completedAt.startsWith(today)).length
       },
+
+      exportData: () => {
+        const state = get()
+        const data = exportToJSON(state.practiceRecords, state.weakPoints)
+        downloadFile(data)
+      },
+
+      importData: (data, mode) => {
+        const state = get()
+        if (mode === 'overwrite') {
+          set({
+            practiceRecords: data.practiceRecords,
+            weakPoints: data.weakPoints,
+          })
+          return {
+            recordsCount: data.practiceRecords.length,
+            weakPointsCount: data.weakPoints.length,
+          }
+        } else {
+          const result = mergeData(
+            state.practiceRecords,
+            state.weakPoints,
+            data.practiceRecords,
+            data.weakPoints
+          )
+          set({
+            practiceRecords: result.practiceRecords,
+            weakPoints: result.weakPoints,
+          })
+          return {
+            recordsCount: result.stats.mergedRecords,
+            weakPointsCount: result.stats.mergedWeakPoints,
+          }
+        }
+      },
+
+      setPracticeRecords: (records) => set({ practiceRecords: records }),
+      setWeakPoints: (wps) => set({ weakPoints: wps }),
     }),
     {
       name: 'interview-bomb-storage',

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Download, Upload, Trash2, Database, AlertTriangle, CheckCircle2, X, FileJson } from 'lucide-react'
 import { useStore } from '@/store/useStore'
@@ -20,6 +20,29 @@ export default function DataManager() {
   const handleExport = useCallback(() => {
     exportData()
   }, [exportData])
+
+  const handleCancelImport = useCallback(() => {
+    setPendingImportData(null)
+  }, [])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (pendingImportData) {
+          handleCancelImport()
+        }
+        if (showClearConfirm) {
+          setShowClearConfirm(false)
+          setClearConfirmText('')
+        }
+      }
+    }
+
+    if (pendingImportData || showClearConfirm) {
+      document.addEventListener('keydown', handleKeyDown)
+      return () => document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [pendingImportData, showClearConfirm, handleCancelImport])
 
   const handleFileSelect = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,10 +92,6 @@ export default function DataManager() {
     },
     [pendingImportData, importData]
   )
-
-  const handleCancelImport = useCallback(() => {
-    setPendingImportData(null)
-  }, [])
 
   const handleClearData = useCallback(() => {
     if (clearConfirmText !== '确认清空') return

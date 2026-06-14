@@ -139,7 +139,7 @@ export function mergeData(
           new Date(existing.lastPracticeAt) > new Date(wp.lastPracticeAt)
             ? existing.lastPracticeAt
             : wp.lastPracticeAt,
-        isMastered: existing.isMastered && wp.isMastered,
+        isMastered: existing.isMastered || wp.isMastered,
       })
     } else {
       weakPointMap.set(wp.questionId, wp)
